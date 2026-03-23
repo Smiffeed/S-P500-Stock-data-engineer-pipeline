@@ -1,5 +1,9 @@
 __pycache__
+
+# Airflow
+airflow
 .env
+
 # Local .terraform directories
 .terraform/
 
@@ -37,3 +41,14 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Python caches and bytecode
+**/__pycache__/
+*.py[cod]
+
+# Airflow runtime artifacts
+airflow/logs/
+airflow/data/raw/
+airflow/config/airflow-webserver.pid
+airflow/config/airflow-scheduler.pid
+airflow/config/airflow.db
