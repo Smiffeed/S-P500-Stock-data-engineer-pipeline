@@ -2,7 +2,6 @@ __pycache__
 terraform/cred.json
 
 # Airflow
-airflow
 .env
 
 # Local .terraform directories
