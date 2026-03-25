@@ -6,7 +6,7 @@ variable "credentials" {
 variable "bq_dataset_name" {
   description = "My BigQuery Dataset Name"
   #Update the below to what you want your dataset to be called
-  default = "demo_dataset"
+  default = "sp500_analytics"
 }
 
 variable "region" {
