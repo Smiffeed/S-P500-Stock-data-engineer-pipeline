@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.env.*
+terraform/.terraform
+terraform/.terraform.lock.hcl
+airflow/logs
+airflow/data
+__pycache__
+**/__pycache__
+*.pyc
