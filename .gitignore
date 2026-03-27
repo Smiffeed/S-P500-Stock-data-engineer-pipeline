@@ -1,5 +1,6 @@
 __pycache__
 terraform/cred.json
+airflow/config/gcp_credentials.json
 
 # Airflow
 .env

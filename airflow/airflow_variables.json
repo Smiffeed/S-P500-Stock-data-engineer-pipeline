@@ -1,6 +1,6 @@
 {
   "BQ_DATASET": "sp500_analytics",
-  "GCP_PROJECT_ID": "de-zoomcamp-project-491217",
-  "GCS_BUCKET_NAME": "de-zoomcamp-project-491217-terra-bucket",
+  "GCP_PROJECT_ID": "de-zoomcamp-project-494324",
+  "GCS_BUCKET_NAME": "de-zoomcamp-project-bucket",
   "KAGGLE_DATASET_SLUG": "andrewmvd/sp-500-stocks"
 }

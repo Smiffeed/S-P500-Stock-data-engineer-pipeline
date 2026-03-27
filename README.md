@@ -1,5 +1,12 @@
 # S&P500 Stock Data Engineering Pipeline
 
+## Overview
+This project is an end-to-end batch data engineering pipeline for S&P500 analytics. It ingests daily market files from Kaggle, stores raw data in Google Cloud Storage, transforms data with Spark, loads curated tables into BigQuery, and powers a Looker Studio dashboard for sector and trend analysis.
+
+The main goal is to provide a reproducible workflow that demonstrates orchestration, cloud storage, data warehouse modeling, and dashboard-ready transformations.
+
+> Disclaimer: This repository is for educational and data engineering demonstration purposes only. It does not provide financial, trading, or investment advice.
+
 ## Problem description
 Investors and financial analysts need a reliable way to monitor how the S&P500 changes over time and how each sector contributes to index behavior. Manual collection and aggregation is slow, error-prone, and difficult to maintain for historical analysis.
 
@@ -133,19 +140,24 @@ If you want to include a public dashboard link, add it in this section.
 - Kaggle API credentials
 - A GCP project with billing enabled and BigQuery + GCS APIs enabled
 
-### 1) Configure credentials and environment
-1. Put your GCP service account key for Airflow and Spark in:
-   airflow/config/gcp_credentials.json
-2. Put your GCP service account key for Terraform in:
-   terraform/cred.json
-3. Create a .env file in repository root:
+### Required GCP roles and service accounts
+Use one service account for runtime (Airflow + Spark) and one for Terraform.
 
-```bash
-cat > .env << 'EOF'
-KAGGLE_USERNAME=your_kaggle_username
-KAGGLE_API_TOKEN=your_kaggle_key
-EOF
-```
+Runtime service account suggested roles:
+- Storage Admin
+- BigQuery Admin
+
+### Create service accounts, roles, and keys
+1. In Google Cloud platform website go to IAM & Adimin --> Service Accounts --> Create service Account
+2. Your preference account ID or the same name as terraform for easier terraform setting
+3. then in permission section add Storage Admin role and BigQuery Admin role.
+4. Done Creation
+
+### 1) Configure credentials and environment
+1. In APIs & Services --> API Library, enable `Cloud Storage` and `BigQuery API`
+2. Get your credentials.json via IAM & Admin --> Service Accounts --> 3 dots of your service account ---> manage keys --> add key --> create new key --> JSON --> create. You will get the cred.json file. As you can follow in this instruction in terrform basic youtube video from zoomcamp course.
+![manage_key](img/manage_key.png)
+3. Put your GCP service account key for Terraform in terraform/cred.json and in airflow/config/gcp_crendentials.json
 
 4. Verify files exist before running anything:
 
@@ -160,9 +172,11 @@ From the terraform directory:
 cd terraform
 terraform init
 terraform plan
-terraform apply -auto-approve
+terraform apply
 cd ..
 ```
+
+>Don't forget to change variables project-id, bigquery dataset name base on your GCP.
 
 Expected result:
 - One GCS bucket is created
@@ -170,7 +184,15 @@ Expected result:
 
 Defaults in this project:
 - BigQuery dataset: sp500_analytics
-- Bucket: de-zoomcamp-project-491217-terra-bucket
+- Bucket: de-zoomcamp-project-bucket (Your bucket name)
+
+**Create a .env file in repository root:**
+
+```bash
+AIRFLOW_UID=1000
+KAGGLE_USERNAME=Username
+KAGGLE_API_TOKEN=API_token
+```
 
 ### 3) Start Airflow and Spark services
 From repository root:
@@ -206,16 +228,17 @@ Set required variables (either in UI or CLI). Required keys:
 - GCP_PROJECT_ID
 - BQ_DATASET
 
+Using the example or import in airflow/airflow_variables.json
+
 CLI option (copy-paste):
 
 ```bash
 docker compose run --rm airflow-cli airflow variables set KAGGLE_DATASET_SLUG andrewmvd/sp-500-stocks
-docker compose run --rm airflow-cli airflow variables set GCS_BUCKET_NAME de-zoomcamp-project-491217-terra-bucket
-docker compose run --rm airflow-cli airflow variables set GCP_PROJECT_ID de-zoomcamp-project-491217
+docker compose run --rm airflow-cli airflow variables set GCS_BUCKET_NAME de-zoomcamp-project-bucket
+docker compose run --rm airflow-cli airflow variables set GCP_PROJECT_ID de-zoomcamp-project-494324
 docker compose run --rm airflow-cli airflow variables set BQ_DATASET sp500_analytics
 ```
-
-or using the given `airflow_variables.json`
+> or using the given `airflow_variables.json`
 
 ### 5) Trigger pipeline
 1. Open DAG named SP500_stock_data_download
@@ -246,10 +269,21 @@ FROM `de-zoomcamp-project-491217.sp500_analytics.mart_sector_daily`;
 Success criterion:
 - row_count > 0
 
+You can see that there are 4 datasets in the Cloud Storage and BigQuery:
+sp500_analytics
+├── mart_sector_daily
+├── raw_sp500_companies
+├── raw_sp500_index
+└── raw_sp500_stocks
+
 ### 7) Connect Looker Studio
 1. Connect Looker Studio to BigQuery dataset
+![looker1](img/looker1.png)
+![looker2](img/looker2.png)
+![looker3](img/looker3.png)
 2. Build charts using mart_sector_daily
-3. Add at least two required tiles
+
+[**My Looker**](https://lookerstudio.google.com/reporting/f2504de2-1220-4cc0-af34-5903b5e2ac12)
 
 ### 8) Stop services and optional cleanup
 Stop local stack:
@@ -264,9 +298,3 @@ Optional cloud cleanup to avoid cost:
 cd terraform
 terraform destroy -auto-approve
 cd ..
-```
-
-### Do I need to deploy?
-- For this project, you do not need to deploy a public production app.
-- You do need cloud resources (GCS + BigQuery) and IaC (Terraform) if you want full points on the cloud criterion.
-- Running Airflow and Spark locally with Docker is acceptable for reproducibility as long as another reviewer can follow these steps and get successful DAG runs.
