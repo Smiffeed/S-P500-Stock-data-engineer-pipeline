@@ -13,6 +13,9 @@ This project solves that with an automated batch pipeline that:
 ## Project architecture
 ![Architecture diagram](img/diagram.png)
 
+### Airflow DAG graph
+![Airflow DAG graph](img/SP500_stock_data_download-graph.png)
+
 Technology stack:
 - Cloud: Google Cloud Platform
 - Infrastructure as Code: Terraform
@@ -29,6 +32,8 @@ Technology stack:
 - [terraform/main.tf](terraform/main.tf): GCS bucket and BigQuery dataset provisioning
 - [terraform/variable.tf](terraform/variable.tf): Terraform variables
 - [img/diagram.png](img/diagram.png): Architecture diagram
+- [img/SP500_stock_data_download-graph.png](img/SP500_stock_data_download-graph.png): Airflow DAG graph
+- [img/looker.png](img/looker.png): Looker Studio dashboard screenshot
 
 ## Data pipeline flow
 Batch schedule: daily
@@ -103,6 +108,8 @@ This strategy is optimal for your use case because dashboard queries naturally f
 ## Dashboard
 Dashboard tool: Looker Studio
 
+![S&P500 dashboard](img/looker.png)
+
 Implemented tiles:
 1. Categorical distribution tile
 - S&P500 composition by sector based on volume
@@ -124,21 +131,42 @@ If you want to include a public dashboard link, add it in this section.
 - Terraform
 - Google Cloud project and service account key
 - Kaggle API credentials
+- A GCP project with billing enabled and BigQuery + GCS APIs enabled
 
 ### 1) Configure credentials and environment
-1. Put your GCP key file in:
-	airflow/config/gcp_credentials.json
-2. Put your Terraform key file in:
-	terraform/cred.json
-3. Create a .env file in repository root with at least:
-	KAGGLE_USERNAME=your_kaggle_username
-	KAGGLE_API_TOKEN=your_kaggle_key
+1. Put your GCP service account key for Airflow and Spark in:
+   airflow/config/gcp_credentials.json
+2. Put your GCP service account key for Terraform in:
+   terraform/cred.json
+3. Create a .env file in repository root:
+
+```bash
+cat > .env << 'EOF'
+KAGGLE_USERNAME=your_kaggle_username
+KAGGLE_API_TOKEN=your_kaggle_key
+EOF
+```
+
+4. Verify files exist before running anything:
+
+```bash
+ls -l airflow/config/gcp_credentials.json terraform/cred.json .env
+```
 
 ### 2) Provision cloud resources with Terraform
-From terraform directory:
-1. terraform init
-2. terraform plan
-3. terraform apply
+From the terraform directory:
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply -auto-approve
+cd ..
+```
+
+Expected result:
+- One GCS bucket is created
+- One BigQuery dataset is created
 
 Defaults in this project:
 - BigQuery dataset: sp500_analytics
@@ -146,7 +174,21 @@ Defaults in this project:
 
 ### 3) Start Airflow and Spark services
 From repository root:
-1. docker-compose up -d --build
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Wait until these services are Up/healthy:
+- airflow-apiserver
+- airflow-scheduler
+- airflow-worker
+- airflow-triggerer
+- postgres
+- redis
+- spark-master
+- spark-worker
 
 Airflow UI:
 - http://localhost:8080
@@ -158,22 +200,35 @@ Spark master UI:
 - http://localhost:8081
 
 ### 4) Configure Airflow Variables
-Set these variables in Airflow UI before running the DAG:
+Set required variables (either in UI or CLI). Required keys:
 - KAGGLE_DATASET_SLUG
 - GCS_BUCKET_NAME
 - GCP_PROJECT_ID
 - BQ_DATASET
 
-Expected values example:
-- KAGGLE_DATASET_SLUG: andrewmvd/sp-500-stocks
-- GCS_BUCKET_NAME: de-zoomcamp-project-491217-terra-bucket
-- GCP_PROJECT_ID: de-zoomcamp-project-491217
-- BQ_DATASET: sp500_analytics
+CLI option (copy-paste):
+
+```bash
+docker compose run --rm airflow-cli airflow variables set KAGGLE_DATASET_SLUG andrewmvd/sp-500-stocks
+docker compose run --rm airflow-cli airflow variables set GCS_BUCKET_NAME de-zoomcamp-project-491217-terra-bucket
+docker compose run --rm airflow-cli airflow variables set GCP_PROJECT_ID de-zoomcamp-project-491217
+docker compose run --rm airflow-cli airflow variables set BQ_DATASET sp500_analytics
+```
+
+or using the given `airflow_variables.json`
 
 ### 5) Trigger pipeline
 1. Open DAG named SP500_stock_data_download
-2. Trigger a manual run or wait for schedule every midnight
-3. Wait until all tasks complete successfully
+2. Unpause the DAG if it is paused
+3. Trigger a manual run/waiting for schedule run
+4. Wait until all tasks complete successfully
+
+Or trigger from CLI:
+
+```bash
+docker compose run --rm airflow-cli airflow dags unpause SP500_stock_data_download
+docker compose run --rm airflow-cli airflow dags trigger SP500_stock_data_download
+```
 
 ### 6) Validate outputs
 Check these artifacts:
@@ -181,7 +236,37 @@ Check these artifacts:
 - Processed parquet in GCS under processed/sp500_sector_daily
 - BigQuery table mart_sector_daily populated with rows
 
+Suggested SQL check in BigQuery:
+
+```sql
+SELECT COUNT(*) AS row_count
+FROM `de-zoomcamp-project-491217.sp500_analytics.mart_sector_daily`;
+```
+
+Success criterion:
+- row_count > 0
+
 ### 7) Connect Looker Studio
 1. Connect Looker Studio to BigQuery dataset
 2. Build charts using mart_sector_daily
 3. Add at least two required tiles
+
+### 8) Stop services and optional cleanup
+Stop local stack:
+
+```bash
+docker compose down
+```
+
+Optional cloud cleanup to avoid cost:
+
+```bash
+cd terraform
+terraform destroy -auto-approve
+cd ..
+```
+
+### Do I need to deploy?
+- For this project, you do not need to deploy a public production app.
+- You do need cloud resources (GCS + BigQuery) and IaC (Terraform) if you want full points on the cloud criterion.
+- Running Airflow and Spark locally with Docker is acceptable for reproducibility as long as another reviewer can follow these steps and get successful DAG runs.
