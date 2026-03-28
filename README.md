@@ -32,6 +32,8 @@ Technology stack:
 - Data warehouse: BigQuery
 - Dashboard: Looker Studio
 
+[**Kaggle data source**](https://www.kaggle.com/datasets/andrewmvd/sp-500-stocks)
+
 ## Repository structure
 - [airflow/dags/dag.py](airflow/dags/dag.py): Main orchestration DAG
 - [airflow/dags/scripts/transform_sp500.py](airflow/dags/scripts/transform_sp500.py): Spark transformation job
@@ -140,6 +142,8 @@ If you want to include a public dashboard link, add it in this section.
 - Kaggle API credentials
 - A GCP project with billing enabled and BigQuery + GCS APIs enabled
 
+After cloning the repository
+
 ### Required GCP roles and service accounts
 Use one service account for runtime (Airflow + Spark) and one for Terraform.
 
@@ -157,13 +161,7 @@ Runtime service account suggested roles:
 1. In APIs & Services --> API Library, enable `Cloud Storage` and `BigQuery API`
 2. Get your credentials.json via IAM & Admin --> Service Accounts --> 3 dots of your service account ---> manage keys --> add key --> create new key --> JSON --> create. You will get the cred.json file. As you can follow in this instruction in terrform basic youtube video from zoomcamp course.
 ![manage_key](img/manage_key.png)
-3. Put your GCP service account key for Terraform in terraform/cred.json and in airflow/config/gcp_crendentials.json
-
-4. Verify files exist before running anything:
-
-```bash
-ls -l airflow/config/gcp_credentials.json terraform/cred.json .env
-```
+3. Put your GCP service account key for Terraform in terraform/cred.json and in airflow/config/gcp_credentials.json (same file just copy to 2 paths)
 
 ### 2) Provision cloud resources with Terraform
 From the terraform directory:
@@ -173,10 +171,11 @@ cd terraform
 terraform init
 terraform plan
 terraform apply
-cd ..
 ```
 
->Don't forget to change variables project-id, bigquery dataset name base on your GCP.
+>Don't forget to change `variable.tf` project-id, bigquery, location etc. value base on your GCP/AWS/Azure interrform.
+
+>Or you can set your own cloud without terraform depend on your preferences.
 
 Expected result:
 - One GCS bucket is created
@@ -202,6 +201,18 @@ docker compose up -d --build
 docker compose ps
 ```
 
+> **Warning**\
+If you use Linux there is a chance of permission denied error. 
+Please using these command to fix it:
+
+```bash
+sudo chown -R $(id -u):$(id -g) ./airflow/logs ./airflow/dags ./airflow/plugins ./airflow/data
+sudo chmod -R 755 ./airflow/logs ./airflow/dags ./airflow/plugins ./airflow/data
+```
+This problem occur because of airflow require edit/create files/folders in airflow folder. Another fix is changing 
+
+The way you can fix this and I found this will fix is by using `COPY` in `Dockerfile`. However, this method is not reliable when you need to change code in dags folder which you might need to rebuild the docker compose.
+
 Wait until these services are Up/healthy:
 - airflow-apiserver
 - airflow-scheduler
@@ -221,7 +232,10 @@ Airflow UI:
 Spark master UI:
 - http://localhost:8081
 
-### 4) Configure Airflow Variables
+>Another problem is port. You can change port in `docker-compose.yaml`. In line 91 for Airflow and line 236 for spark in case port conflict with your system for some reasons. You need to change spark port number in `dag.py` line 230 also.
+
+### 4) Configure Airflow
+#### Variables
 Set required variables (either in UI or CLI). Required keys:
 - KAGGLE_DATASET_SLUG
 - GCS_BUCKET_NAME
@@ -234,11 +248,22 @@ CLI option (copy-paste):
 
 ```bash
 docker compose run --rm airflow-cli airflow variables set KAGGLE_DATASET_SLUG andrewmvd/sp-500-stocks
-docker compose run --rm airflow-cli airflow variables set GCS_BUCKET_NAME de-zoomcamp-project-bucket
-docker compose run --rm airflow-cli airflow variables set GCP_PROJECT_ID de-zoomcamp-project-494324
+docker compose run --rm airflow-cli airflow variables set GCS_BUCKET_NAME 	
+de-zoomcamp-project-491217-terra-bucket
+docker compose run --rm airflow-cli airflow variables set GCP_PROJECT_ID de-zoomcamp-project-491217
 docker compose run --rm airflow-cli airflow variables set BQ_DATASET sp500_analytics
 ```
 > or using the given `airflow_variables.json`
+
+#### Connections
+1. Click `Add Connection` on top right
+1.  Connection ID: `google_cloud_default`; Connection Type: `Google Cloud`
+2. Set project-id and keyfile path
+![gcp_conn](img/gcp_conn.png)
+
+3. Set `spark_default` connection
+4. set host and port
+![spark_conn](img/spark_conn.png)
 
 ### 5) Trigger pipeline
 1. Open DAG named SP500_stock_data_download
@@ -252,7 +277,13 @@ Or trigger from CLI:
 docker compose run --rm airflow-cli airflow dags unpause SP500_stock_data_download
 docker compose run --rm airflow-cli airflow dags trigger SP500_stock_data_download
 ```
+> **Warning** \
+if you get any error please check **variables** and **connections** typing and name. In some case using linux like my pc will result permission denied due to ownership previlege. Fixing by:
 
+```bash
+sudo chown -R $(id -u):$(id -g) ./airflow/logs ./airflow/dags ./airflow/plugins ./airflow/data
+sudo chmod -R 755 ./airflow/logs ./airflow/dags ./airflow/plugins ./airflow/data
+```
 ### 6) Validate outputs
 Check these artifacts:
 - Raw files in GCS under raw by date path
@@ -270,11 +301,14 @@ Success criterion:
 - row_count > 0
 
 You can see that there are 4 datasets in the Cloud Storage and BigQuery:
+```bash
 sp500_analytics
 ├── mart_sector_daily
 ├── raw_sp500_companies
 ├── raw_sp500_index
 └── raw_sp500_stocks
+```
+
 
 ### 7) Connect Looker Studio
 1. Connect Looker Studio to BigQuery dataset

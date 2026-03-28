@@ -39,6 +39,7 @@ with DAG(
     start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Bangkok"),
     schedule="@daily",
     catchup=False,
+    max_active_runs=1,
     tags=["kaggle", "smoke-test"],
 ) as dag:
 
