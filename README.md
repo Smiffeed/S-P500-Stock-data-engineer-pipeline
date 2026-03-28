@@ -142,7 +142,8 @@ If you want to include a public dashboard link, add it in this section.
 - Kaggle API credentials
 - A GCP project with billing enabled and BigQuery + GCS APIs enabled
 
-After cloning the repository
+This instruction will walk you through step-by-step as much as possible with the problems and solutions along the way I test this project.
+First clone the repository
 
 ### Required GCP roles and service accounts
 Use one service account for runtime (Airflow + Spark) and one for Terraform.
@@ -186,9 +187,12 @@ Defaults in this project:
 - Bucket: de-zoomcamp-project-bucket (Your bucket name)
 
 **Create a .env file in repository root:**
+```bash
+echo -e "AIRFLOW_UID=$(id -u)" > .env
+```
 
 ```bash
-AIRFLOW_UID=1000
+AIRFLOW_UID=1000 # example value (mostly be 1000) from echo command above
 KAGGLE_USERNAME=Username
 KAGGLE_API_TOKEN=API_token
 ```
