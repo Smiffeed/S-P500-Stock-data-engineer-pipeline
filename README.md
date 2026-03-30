@@ -146,14 +146,15 @@ This instruction will walk you through step-by-step as much as possible with the
 First clone the repository
 
 ### Required GCP roles and service accounts
-Use one service account for runtime (Airflow + Spark) and one for Terraform.
-
-Runtime service account suggested roles:
-- Storage Admin
-- BigQuery Admin
+Use one service account for runtime (Airflow + Spark) and for Terraform.
 
 ### Create service accounts, roles, and keys
 1. In Google Cloud platform website go to IAM & Adimin --> Service Accounts --> Create service Account
+    - Runtime service account roles:
+      - Viewer
+      - Storage Admin
+      - BigQuery Admin
+      - Compute Admin
 2. Your preference account ID or the same name as terraform for easier terraform setting
 3. then in permission section add Storage Admin role and BigQuery Admin role.
 4. Done Creation
