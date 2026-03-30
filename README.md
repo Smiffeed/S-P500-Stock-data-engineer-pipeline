@@ -271,7 +271,7 @@ docker compose run --rm airflow-cli airflow variables set BQ_DATASET sp500_analy
 ![spark_conn](img/spark_conn.png)
 
 ### 5) Trigger pipeline
-Before you trigger the pipeline you can trigger validator to check connections and variables correctness via validation_variables_and_connections in dag.
+Before you trigger the pipeline you can trigger validator to check connections and variables correctness via validation_variables_and_connections in dag. This dag will detect missing/wrong typing variable and connection.
 1. Open DAG named SP500_stock_data_download/SP500_stock_data_upload_from_local_csv
 2. Unpause the DAG if it is paused
 3. Trigger a manual run/waiting for schedule run
