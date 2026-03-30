@@ -196,6 +196,7 @@ AIRFLOW_UID=1000 # example value (mostly be 1000) from echo command above
 KAGGLE_USERNAME=Username
 KAGGLE_API_TOKEN=API_token
 ```
+or you can upload dataset from Kaggle to /airflow/upload folder. There ill be option or upload user who does not want to use kaggle api.
 
 ### 3) Start Airflow and Spark services
 From repository root:
@@ -241,10 +242,10 @@ Spark master UI:
 ### 4) Configure Airflow
 #### Variables
 Set required variables (either in UI or CLI). Required keys:
-- KAGGLE_DATASET_SLUG
-- GCS_BUCKET_NAME
-- GCP_PROJECT_ID
-- BQ_DATASET
+- KAGGLE_DATASET_SLUG - name of kaggle dataset
+- GCS_BUCKET_NAME - bucket name
+- GCP_PROJECT_ID - GCP project ID
+- BQ_DATASET - BigQuery dataset name
 
 Using the example or import in airflow/airflow_variables.json
 
@@ -270,7 +271,8 @@ docker compose run --rm airflow-cli airflow variables set BQ_DATASET sp500_analy
 ![spark_conn](img/spark_conn.png)
 
 ### 5) Trigger pipeline
-1. Open DAG named SP500_stock_data_download
+Before you trigger the pipeline you can trigger validator to check connections and variables correctness via validation_variables_and_connections in dag.
+1. Open DAG named SP500_stock_data_download/SP500_stock_data_upload_from_local_csv
 2. Unpause the DAG if it is paused
 3. Trigger a manual run/waiting for schedule run
 4. Wait until all tasks complete successfully
