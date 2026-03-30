@@ -14,7 +14,7 @@ from kaggle.api.kaggle_api_extended import KaggleApi
 
 
 def check_required_variables():
-    required_vars = ["GCS_BUCKET_NAME", "GCP_PROJECT_ID", "BQ_DATASET", "KAGGLE_DATASET_SLUG"]
+    required_vars = ["GCS_BUCKET_NAME", "GCP_PROJECT_ID", "BQ_DATASET"]
     missing_vars = [var for var in required_vars if not Variable.get(var, default=None)]
     if missing_vars:
         raise ValueError(f"Missing required Airflow Variables: {', '.join(missing_vars)}")
