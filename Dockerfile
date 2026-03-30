@@ -14,4 +14,5 @@ RUN pip install --no-cache-dir \
     apache-airflow-providers-apache-spark \
     apache-airflow-providers-google \
     google-cloud-storage \
-    pyspark==4.0.1
+    pyspark==4.0.1 \
+    pytest
