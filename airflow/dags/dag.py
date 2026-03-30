@@ -36,7 +36,7 @@ def upload_to_gcs(run_id: str, ds: str, bucket_name: str, **_):
 
 with DAG(
     dag_id="SP500_stock_data_download",
-    start_date=pendulum.datetime(2026, 1, 1, tz="Asia/Bangkok"),
+    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     schedule="@daily",
     catchup=False,
     max_active_runs=1,
