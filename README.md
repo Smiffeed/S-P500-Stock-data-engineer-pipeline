@@ -107,8 +107,8 @@ Transform logic:
 - Queries that filter or aggregate by sector benefit from 10-100x faster retrieval
 
 **Combined effect:**
-When a user queries "Technology sector prices for March 2026", BigQuery:
-1. Prunes by partition → reads only March 2026 blocks (not years of historical data)
+When a user queries "Technology sector prices for December 2024", BigQuery:
+1. Prunes by partition → reads only December 2024 blocks (not years of historical data)
 2. Skips by cluster → reads only Technology blocks within that partition
 3. Result: ~99% fewer bytes scanned than a full table scan
 
