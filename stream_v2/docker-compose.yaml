@@ -1,0 +1,26 @@
+volumes:
+  timescaledb: 
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    volumes:
+      - timescaledb:/home/postgres/pgdata/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=timescaledb_test
+    ports:
+      - 5432:5432
+  broker:
+    image: apache/kafka:latest
+    hostname: broker
+    container_name: broker
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
