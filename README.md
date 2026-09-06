@@ -1,7 +1,10 @@
 # S&P500 Stock Data Engineering Pipeline
 
 ## Overview
-This project is an end-to-end batch data engineering pipeline for S&P500 analytics. It ingests daily market files from Kaggle, stores raw data in Google Cloud Storage, transforms data with Spark, loads curated tables into BigQuery, and powers a Looker Studio dashboard for sector and trend analysis.
+This project is an end-to-end data engineering pipeline for S&P500 analytics. 
+
+**🚧 Work in Progress:** A real-time streaming pipeline is currently under development to mimic how TradingView works. 
+**✅ Currently Working:** The fully operational pipeline is the batch processing orchestrated by Airflow. It ingests daily market files from Kaggle, stores raw data in Google Cloud Storage, transforms data with Spark, loads curated tables into BigQuery, and powers a Looker Studio dashboard for sector and trend analysis.
 
 The main goal is to provide a reproducible workflow that demonstrates orchestration, cloud storage, data warehouse modeling, and dashboard-ready transformations.
 
